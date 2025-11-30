@@ -99,7 +99,7 @@ CL-USER> (append my-list (third my-list))
 
 ## Лістинг коду
 ```lisp
-;; Завдання за варіантом 2
+;; Створення списку для завдання за варіантом 2
 CL-USER> (defvar my-list2)
 MY-LIST2
 
@@ -109,6 +109,7 @@ CL-USER> (setq my-list2
                  (list (cons 'A shared) 'B shared 'C)))
 ((A 2 1) B (2 1) C)
 ```
+
 
 
 
