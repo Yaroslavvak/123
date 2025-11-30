@@ -4,149 +4,111 @@
 "Обробка списків з використанням базових функцій"<br/>
 дисципліни "Вступ до функціонального програмування"
 </p>
-<p align="right"><b>Студент(-ка)</b>: Гуманіцький Андрій Олександрович КВ-21</p>
+<p align="right"><b>Студент(-ка)</b>: Вакульчук Ярослав Віталійович КВ-22</p>
 <p align="right"><b>Рік</b>: 2025</p>
 
 ##
 ## Загальне завдання
 
-1. Створити список з п'яти елементів, використовуючи функції LIST і CONS.
-2. Отримати голову списку.
-3. Отримати хвіст списку.
-4. Отримати третій елемент списку.
-5. Отримати останній елемент списку.
-6. Використати предикати ATOM та LISTP на різних елементах списку (по 2-3
+1. Створіть список з п'яти елементів, використовуючи функції LIST і CONS . Форма
+створення списку має бути одна — використання SET чи SETQ (або інших
+допоміжних форм) для збереження проміжних значень не допускається. Загальна
+кількість елементів (включно з підсписками та їх елементами) не має
+перевищувати 10-12 шт. (дуже великий список робити не потрібно). Збережіть
+створений список у якусь змінну з SET або SETQ . Список має містити (напряму
+або у підсписках):
+хоча б один символ
+хоча б одне число
+хоча б один не пустий підсписок
+хоча б один пустий підсписок
+
+2. Отримайте голову списку.
+3. Отримайте хвіст списку.
+4. Отримайте третій елемент списку.
+5. Отримайте останній елемент списку.
+6. Використайте предикати ATOM та LISTP на різних елементах списку (по 2-3
 приклади для кожної функції).
-7. Використайти на елементах списку 2-3 інших предикати з розглянутих у розділі 4
+7. Використайте на елементах списку 2-3 інших предикати з розглянутих у розділі 4
 навчального посібника.
-8. Об'єднайти створений список з одним із його непустих підсписків. Для цього
-використайте функцію APPEND.
+8. Об'єднайте створений список з одним із його непустих підсписків. Для цього
+використайте функцію APPEND .
+
 
 <p align="center"><b>Лістинг коду</b></p>
 
 ```lisp
-;;1) making list general task
-(defun make-my-list ()
-  (cons 'A (list (list 'B 'C) () 7 "hi")))
+;; 1. Створення списку
+CL-USER> (defvar my-list)
+MY-LIST
+CL-USER> (setq my-list (list 'A 10 (cons 1 (list 2)) nil 5))
+(A 10 (1 2) NIL 5)
 
-;;1) Save list 
-(defvar T1)
-(set 'T1 (make-my-list))
-
-;;2) Head
-(car T1)                    ; => A
-
-CL-USER> (car T1)
+;; 2. Отримання голови списку
+CL-USER> (car my-list)
 A
 
-;;3) Tail
-(cdr T1)                    ; => ((B C) NIL 7 "hi")
+;; 3. Отримання хвоста списку
+CL-USER> (cdr my-list)
+(10 (1 2) NIL 5)
 
-CL-USER> (cdr T1)
-((B C) NIL 7 "hi")
+;; 4. Отримання третього елемента списку
+CL-USER> (third my-list)
+(1 2)
 
-;;4) 3rd element
-(third T1)                  ; => NIL
+;; 5. Отримання останнього елемента списку
+CL-USER> (car (last my-list))
+5
 
-CL-USER> (third T1)
+;; 6. Використання предикатів ATOM та LISTP
+CL-USER> (atom (car my-list))    
+T
+CL-USER> (atom (third my-list))   
 NIL
 
-;;5) last element
-(car (last T1))             ; => "hi"
-
-CL-USER> (car (last T1)) 
-"hi"
-
-;;6) ATOM та LISTP
-(atom (car T1))             ; => T   
-(atom (cdr T1))             ; => NIL
-
-CL-USER> (atom (car T1)) 
+CL-USER> (listp (third my-list))  
 T
-CL-USER> (atom (cdr T1))
+CL-USER> (listp (car (last my-list))) 
 NIL
 
-(listp (cdr T1))            ; => T
-(listp (car (last T1)))     ; => NIL
-
-CL-USER> (listp (cdr T1))
+;; 7. Використання інших предикатів (NUMBERP, NULL)
+CL-USER> (numberp (car (last my-list))) 
 T
-CL-USER> (listp (car (last T1)))
+CL-USER> (numberp (car my-list))        
 NIL
 
-;;7) Different predicates
-(numberp (first T1))        ; => NIL
-(stringp (car (last T1)))   ; => T    
-(symbolp (first T1))        ; => T 
-(equal (second T1) '(B C))  ; => T
-
-CL-USER> (numberp (first T1))
+CL-USER> (null (cdr (last my-list)))    
+T
+CL-USER> (null (car my-list))           
 NIL
-CL-USER> (stringp (car (last T1)))
-T
-CL-USER> (symbolp (first T1))
-T
-CL-USER> (equal (second T1) '(B C))
-T
 
-;;8) APPEND
-(append T1 (second T1))     ; => (A (B C) NIL 7 "hi" B C)
-
-CL-USER> (append T1 (second T1)) 
-(A (B C) NIL 7 "hi" B C)
+;; 8. Об'єднання списку з одним із його підсписків
+CL-USER> (append my-list (third my-list))
+(A 10 (1 2) NIL 5 1 2)
 ```
 
+## Завдання за варіантом
 
-##
-## Варіант №5
+Створіть список, що відповідає структурі списку, наведеній на рисунку (за варіантом).
+
+## Варіант №2
 <p align="center">
-Створити список, що відповідає структурі списку, наведеній на рисунку
+<img src="lab1.png">
+</p>
+##
 
-![](img/lab1.jpg)
 
-<p align="center"><b>Лістинг коду (варіант №5)</b></p>
+<p align="center"><b>Лістинг коду (варіант №2)</b></p>
 
 ```lisp
-;;9) making list 5 option
-(defun make-my-list-2 ()
-  (let ((tail (list 'F)))
-    (append (list 'D
-                  (append (list 4 'E) tail)
-                  (list 5))
-            tail ))) 
+;; Завдання за варіантом 2
+CL-USER> (defvar my-list2)
+VARIANT-2
 
-(defun make-my-list-3 ()
-  (let* ((tail (cons 'F nil))
-         (sub2 (cons 4 (cons 'E tail)))
-         (sub3 (cons 5 nil)))
-    (cons 'D (cons sub2 (cons sub3 tail)))))
-
-;;9) Save list
-(defvar T2)
-(set 'T2 (make-my-list-2))
-
-(defvar T3)
-(set 'T3 (make-my-list-3))
-
-CL-USER> T2
-(D (4 E F) (5) F)
-CL-USER> T3
-(D (4 E F) (5) F)
+;; Реалізація структури за варіантом 2
+CL-USER> (setq my-list2
+               (let ((shared (list 2 1)))
+                 (list (cons 'A shared) 'B shared 'C)))
+((A 2 1) B (2 1) C)
 ```
-1.	Оголошення функції make-my-list-2 
-2.	Локальна змінна tail: в блоці let створюється спільний хвіст tail = (F). Буде використано двічі
-3.	Верхній рівень — append 2 елементів, один з яких список з елементів описаних у пунктах 4-6 та tail
-4.	Перший елемент верхнього списку — символ D.
-5.	Другий елемент — підсписок, що утворюється виразом
-(append (list 4 'E) tail) → (4 E F).
-6.	Третій елемент — підсписок (5), отриманий як (list 5).
-7.	Остаточне «пришивання» хвоста: другий аргумент верхнього append tail. 
 
-(D (4 E F) (5) F), де останній елемент F — той самий об’єкт, що й у підсписку (4 E F)
-
-1.	Оголошення функції make-my-list-3 
-2.	В блоці let* створюється tail = (F), sub2 = (4 E F), sub3 = (5) (представляють відповідні елементи у списку)
-3.	За допомогою команди cons збирається список із попередньо створених елементів та 'D
-
-Результуючі списки співпадають між собою - (D (4 E F) (5) F)
 
