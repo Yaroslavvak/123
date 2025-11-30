@@ -94,8 +94,6 @@ CL-USER> (append my-list (third my-list))
 <p align="center">
 <img src="lab1.png">
 </p>
-##
-
 
 <p align="center"><b>Лістинг коду (варіант №2)</b></p>
 
@@ -110,5 +108,6 @@ CL-USER> (setq my-list2
                  (list (cons 'A shared) 'B shared 'C)))
 ((A 2 1) B (2 1) C)
 ```
+
 
 
