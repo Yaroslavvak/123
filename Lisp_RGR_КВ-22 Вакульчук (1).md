@@ -20,7 +20,7 @@
   <img src="rgr0.png" alt="Варіант завдання №5">
 </p>
 
-## Реалізації обчислення функції мовою Common Lisp.
+## Реалізації обчислення функції мовою Common Lisp
 ```lisp
 (defun calculate-sequence ()
   (labels ((iter (i prev acc)  ; Змінив STEP на ITER
@@ -53,6 +53,7 @@
 <img src="rgr1.png">
 <img src="rgr2.png">
 <img src="rgr3.png">
+
 
 
 
