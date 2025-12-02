@@ -4,109 +4,88 @@
 "Рекурсія"<br/>
 дисципліни "Вступ до функціонального програмування"
 </p>
-<p align="right"><b>Студент(-ка)</b>: Гуманіцький Андрій Олександрович КВ-21</p>
+<p align="right"><b>Студент</b>: Вакульчук Ярослав Віталійович КВ-22</p>
 <p align="right"><b>Рік</b>: 2025</p>
 
 ## Загальне завдання
-Реалізувати дві рекурсивні функції для обробки списків згідно варіанту.
+Реалізуйте дві рекурсивні функції, що виконують деякі дії з вхідним(и) списком(-ами).
+Вимоги до функцій:
+1. Зміна списку згідно із завданням має відбуватись за рахунок конструювання нового
+списку, а не зміни наявного (вхідного).
+2. Не допускається використання функцій вищого порядку чи стандартних функцій
+для роботи зі списками, що не наведені в четвертому розділі навчального
+посібника.
+3. Реалізована функція не має бути функцією вищого порядку, тобто приймати функції
+в якості аргументів.
+4. Не допускається використання псевдофункцій (деструктивного підходу).
+5. Не допускається використання циклів.
+Кожна реалізована функція має бути протестована для різних тестових наборів.
 
-## Варіант 5
-Написати функцію remove-seconds , яка видаляє зі списку кожен другий елемент.
+## Варіант 2
+<p align="center">
+<img src="lab2_1.png">
+</p>
 
-Написати функцію list-set-symmetric-difference , яка визначає симетричну різницю двох множин, заданих списками атомів (тобто, множину елементів, що не входять до обох множин):
-
-## Лістинг функції remove-seconds
+## Лістинг функції remove-seconds-and-thirds
 ```lisp
-(defun remove-seconds (lst)
+(defun remove-seconds-and-thirds (lst)
   (cond
     ((null lst) nil)
-    ((null (cdr lst)) (list (car lst)))
-    (t (cons (car lst) (remove-seconds (cddr lst))))))
+    (t (cons (car lst) 
+             (remove-seconds-and-thirds (cdddr lst))))))
 ```
 ### Тестові набори та утиліти
 ```lisp
-(defun check-rs (name input expected)
-  (format t "~:[FAILED~;passed~] ~a~%"
-          (equal (remove-seconds input) expected)
+(defun check-result (name actual expected)
+  (format t "~:[FAILED~;passed~]... ~a~%"
+          (equal actual expected)
           name))
 
-(defun test-rs ()
-  (check-rs "rs test 1 (empty)"         '()                 '())
-  (check-rs "rs test 2 (one)"           '(1)                '(1))
-  (check-rs "rs test 3 (two)"           '(1 2)              '(1))
-  (check-rs "rs test 4 (three)"         '(1 2 3)            '(1 3))
-  (check-rs "rs test 5 (four)"          '(a b c d)          '(a c))
-  (check-rs "rs test 6 (mixed)"         '(1 a 3 d 5 f)      '(1 3 5))
-  (check-rs "rs test 7 (sublists)"      '((1) (2) (3) (4))  '((1) (3))))
-
-
+(defun test-remove-seconds-and-thirds ()
+  (format t "~%Testing remove-seconds-and-thirds~%")
+  (check-result "Test 1: Example (a b c d e f g)" (remove-seconds-and-thirds '(a b c d e f g)) '(A D G))
+  (check-result "Test 2: Short list (1 2)" (remove-seconds-and-thirds '(1 2)) '(1))
+  (check-result "Test 3: Empty list" (remove-seconds-and-thirds '()) nil))
 ```
-## Лістинг функції list-set-symmetric-difference
+## Лістинг функції list-set-intersection
 ```lisp
-(defun my-member (x lst)
-  (and lst (or (eql (car lst) x)
-               (my-member x (cdr lst)))))
-
-(defun only-in (x y)
+(defun is-in-list (elem lst)
   (cond
-    ((null x) nil)
-    ((my-member (car x) y) (only-in (cdr x) y))
-    (t (cons (car x) (only-in (cdr x) y)))))
+    ((null lst) nil)
+    ((equal (car lst) elem) t)
+    (t (is-in-list elem (cdr lst)))))
 
-(defun list-set-symmetric-difference (a b)
-  (append (only-in a b) (only-in b a)))
+(defun list-set-intersection (set1 set2)
+  (cond
+    ((null set1) nil)
+    ((is-in-list (car set1) set2) 
+     (cons (car set1) 
+           (list-set-intersection (cdr set1) set2)))
+    (t (list-set-intersection (cdr set1) set2))))
 ```
 ### Тестові набори та утиліти
 ```lisp
-(defun subsetp-by-eql (a b)
-  (if (null a)
-      t
-      (and (my-member (car a) b)
-           (subsetp-by-eql (cdr a) b))))
-
-(defun set-equal-by-eql (a b)
-  (and (subsetp-by-eql a b)
-       (subsetp-by-eql b a)))
-
-(defun check-lssd (name a b expected)
-  (format t "~:[FAILED~;passed~] ~a~%"
-          (set-equal-by-eql (list-set-symmetric-difference a b) expected)
-          name))
-
-(defun test-lssd ()
-  (check-lssd "lssd test 1 (overlap 1)"  '(1 2 3 4) '(3 4 5 6) '(1 2 5 6))
-  (check-lssd "lssd test 2 (disjoint)"   '(a b)     '(c d)     '(a b c d))
-  (check-lssd "lssd test 3 (identical)"  '(1 2)     '(1 2)     '())
-  (check-lssd "lssd test 4 (right)"      '()        '(x y)     '(x y))
-  (check-lssd "lssd test 5 (left)"       '(x y)     '()        '(x y))
-  (check-lssd "lssd test 6 (overlap 2)"  '(a b c)   '(b c d)   '(a d))
-  (check-lssd "lssd test 7 (mixed)"      '(1 a 2)   '(a 3 4)   '(1 2 3 4)))
+(defun test-list-set-intersection ()
+  (format t "~%Testing list-set-intersection~%")
+  (check-result "Test 1: Example (1 2 3 4) (3 4 5 6)" (list-set-intersection '(1 2 3 4) '(3 4 5 6)) '(3 4))
+  (check-result "Test 2: No intersection" (list-set-intersection '(a b) '(c d)) nil)
+  (check-result "Test 3: Empty set" (list-set-intersection '() '(1 2 3)) nil))
 ```
 ### Тестування
 ```lisp
-(defun run-all-tests ()
-  (test-rs)
-  (test-lssd)
-  (format t "~&All tests finished.~%")
-  :ok)
+(test-remove-seconds-and-thirds)
+(test-list-set-intersection)
 
-CL-USER> (run-all-tests)
-passed rs test 1 (empty)
-passed rs test 2 (one)
-passed rs test 3 (two)
-passed rs test 4 (three)
-passed rs test 5 (four)
-passed rs test 6 (mixed)
-passed rs test 7 (sublists)
-passed lssd test 1 (overlap 1)
-passed lssd test 2 (disjoint)
-passed lssd test 3 (identical)
-passed lssd test 4 (right)
-passed lssd test 5 (left)
-passed lssd test 6 (overlap 2)
-passed lssd test 7 (mixed)
-All tests finished.
-:OK
+Testing remove-seconds-and-thirds
+passed... Test 1: Example (a b c d e f g)
+passed... Test 2: Short list (1 2)
+passed... Test 3: Empty list
 
+Testing list-set-intersection
+passed... Test 1: Example (1 2 3 4) (3 4 5 6)
+passed... Test 2: No intersection
+passed... Test 3: Empty set
+NIL
 ```
+
 
