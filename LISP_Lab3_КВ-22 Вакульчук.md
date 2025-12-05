@@ -31,22 +31,22 @@
 
 ## Лістинг функції з використанням конструктивного підходу
 ```lisp
-(defun func-bubble-sort (lst)
+(defun func-bubble-sort (list)
   (labels 
-      ((bubble-pass (l)
+      ((bubble-pass (lst)
          (cond
-           ((null (cdr l)) l)
-           ((> (car l) (cadr l))
-            (cons (cadr l) 
-                  (bubble-pass (cons (car l) (cddr l)))))
+           ((null (cdr lst)) lst)
+           ((> (car lst) (cadr lst))
+            (cons (cadr lst) 
+                  (bubble-pass (cons (car lst) (cddr lst)))))
            (t 
-            (cons (car l) 
-                  (bubble-pass (cdr l))))))
-       (sort-rec (l n)
+            (cons (car lst) 
+                  (bubble-pass (cdr lst))))))
+       (sort-rec (lst n)
          (if (zerop n)
-             l
-             (sort-rec (bubble-pass l) (1- n)))))
-    (sort-rec lst (length lst))))
+             lst
+             (sort-rec (bubble-pass lst) (1- n)))))
+    (sort-rec list (length list))))
 ```
 
 ## Тестові набори та утиліти
@@ -113,5 +113,6 @@ passed... Test 4 (Negative)  Input: (-3 0 2 -8)        Result: (-8 -3 0 2)
 passed... Test 5 (Single)    Input: (42)               Result: (42)
 passed... Test 6 (Empty)     Input: NIL                Result: NIL
 ```
+
 
 
