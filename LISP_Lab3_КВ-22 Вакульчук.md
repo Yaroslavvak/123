@@ -60,7 +60,7 @@
   (format t "~%Testing Functional Bubble Sort~%")
   (check-test "Test 1 (Normal)"    '(3 1 4 1 5 9 2 6) '(1 1 2 3 4 5 6 9) (func-bubble-sort '(3 1 4 1 5 9 2 6)))
   (check-test "Test 2 (Sorted)"    '(1 2 3 4 5)       '(1 2 3 4 5)       (func-bubble-sort '(1 2 3 4 5)))
-  (check-test "Test 3 (Reverse)"   '(5 4 3 2 1)       '(1 2 3 4 5)       (func-bubble-sort '(5 4 3 2 1)))
+  (check-test "Test 3 (Reversed)"  '(5 4 3 2 1)       '(1 2 3 4 5)       (func-bubble-sort '(5 4 3 2 1)))
   (check-test "Test 4 (Negative)"  '(-3 0 2 -8)       '(-8 -3 0 2)       (func-bubble-sort '(-3 0 2 -8)))
   (check-test "Test 5 (Single)"    '(42)              '(42)              (func-bubble-sort '(42)))
   (check-test "Test 6 (Empty)"     '()                '()                (func-bubble-sort '())))
@@ -71,7 +71,7 @@
 Testing Functional Bubble Sort
 passed... Test 1 (Normal)    Input: (3 1 4 1 5 9 2 6)  Result: (1 1 2 3 4 5 6 9)
 passed... Test 2 (Sorted)    Input: (1 2 3 4 5)        Result: (1 2 3 4 5)
-passed... Test 3 (Reverse)   Input: (5 4 3 2 1)        Result: (1 2 3 4 5)
+passed... Test 3 (Reversed)  Input: (5 4 3 2 1)        Result: (1 2 3 4 5)
 passed... Test 4 (Negative)  Input: (-3 0 2 -8)        Result: (-8 -3 0 2)
 passed... Test 5 (Single)    Input: (42)               Result: (42)
 passed... Test 6 (Empty)     Input: NIL                Result: NIL
@@ -97,7 +97,7 @@ passed... Test 6 (Empty)     Input: NIL                Result: NIL
   (format t "~%Testing Imperative Bubble Sort~%")
   (check-test "Test 1 (Normal)"    '(3 1 4 1 5 9 2 6) '(1 1 2 3 4 5 6 9) (imp-bubble-sort '(3 1 4 1 5 9 2 6)))
   (check-test "Test 2 (Sorted)"    '(1 2 3 4 5)       '(1 2 3 4 5)       (imp-bubble-sort '(1 2 3 4 5)))
-  (check-test "Test 3 (Reverse)"   '(5 4 3 2 1)       '(1 2 3 4 5)       (imp-bubble-sort '(5 4 3 2 1)))
+  (check-test "Test 3 (Reversed)"  '(5 4 3 2 1)       '(1 2 3 4 5)       (imp-bubble-sort '(5 4 3 2 1)))
   (check-test "Test 4 (Negative)"  '(-3 0 2 -8)       '(-8 -3 0 2)       (imp-bubble-sort '(-3 0 2 -8)))
   (check-test "Test 5 (Single)"    '(42)              '(42)              (imp-bubble-sort '(42)))
   (check-test "Test 6 (Empty)"     '()                '()                (imp-bubble-sort '())))
@@ -108,9 +108,10 @@ passed... Test 6 (Empty)     Input: NIL                Result: NIL
 Testing Imperative Bubble Sort
 passed... Test 1 (Normal)    Input: (3 1 4 1 5 9 2 6)  Result: (1 1 2 3 4 5 6 9)
 passed... Test 2 (Sorted)    Input: (1 2 3 4 5)        Result: (1 2 3 4 5)
-passed... Test 3 (Reverse)   Input: (5 4 3 2 1)        Result: (1 2 3 4 5)
+passed... Test 3 (Reversed)  Input: (5 4 3 2 1)        Result: (1 2 3 4 5)
 passed... Test 4 (Negative)  Input: (-3 0 2 -8)        Result: (-8 -3 0 2)
 passed... Test 5 (Single)    Input: (42)               Result: (42)
 passed... Test 6 (Empty)     Input: NIL                Result: NIL
 ```
+
 
