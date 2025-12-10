@@ -4,577 +4,281 @@
 "Робота з базою даних"<br/>
 дисципліни "Вступ до функціонального програмування"
 </p>
-<p align="right"><b>Студент</b>: Гуманіцький Андрій Олександрович КВ-21</p>
+<p align="right"><b>Студент</b>: Вакульчук Ярослав Віталійович КВ-22</p>
 <p align="right"><b>Рік</b>: 2025</p>
 
 ## Загальне завдання
-В роботі необхідно реалізувати утиліти для роботи з базою даних, заданою за варіантом. База даних складається з кількох таблиць. Таблиці представлені у вигляді CSV файлів.
-    1. Визначити структури та/або утиліти для створення записів з таблиць
-    2. Розробити утиліту(-и) для зчитування таблиць з файлів
-    3. Розробити функцію select , яка отримує на вхід шлях до файлу з таблицею, а також якийсь об'єкт, який дасть змогу зчитати записи конкретного типу або структури
-    4. Написати утиліту(-и) для запису вибірки (списку записів) у файл
-    5. Написати функції для конвертування записів у інший тип 
-        - структури у геш-таблиці
-        - геш-таблиці у асоціативні списки
-        - асоціативні списки у геш-таблиці
-    6. Написати функцію(-ї) для "красивого" виводу записів таблиці (pretty-print).
+В роботі необхідно реалізувати утиліти для роботи з базою даних. База даних складається з кількох таблиць. Таблиці представлені у вигляді CSV
+файлів. При зчитуванні записів з таблиць, кожен запис має бути представлений певним
+типом в залежності від варіанту
+1. Визначити структури та/або утиліти для створення записів з таблиць
+2. Розробити утиліту(-и) для зчитування таблиць з файлів. Значення колонок мають
+бути розібрані відповідно до типу даних у них. 
+3. Розробити функцію select , яка отримує на вхід шлях до файлу з таблицею, а
+також якийсь об'єкт, який дасть змогу зчитати записи конкретного типу або
+структури. Це може бути ключ, список з якоюсь допоміжною інформацією, функція і
+т. і. За потреби параметрів може бути кілька. select повертає лямбда-вираз,
+який, в разі виклику, виконує "вибірку" записів з таблиці, шлях до якої було
+передано у select . При цьому лямбда-вираз в якості ключових параметрів може
+отримати на вхід значення полів записів таблиці, для того щоб обмежити вибірку
+лише заданими значеннями. Вибірка повертається у
+вигляді списку записів.
+4. Написати утиліту(-и) для запису вибірки (списку записів) у файл.
+5. Написати функції для конвертування записів у інший тип 
+6. Написати функцію(-ї) для "красивого" виводу записів таблиці (pretty-print).
 
-## Варіант 5
-База даних: Проєкти із застосуванням ШІ  
-Тип записів: Геш-таблиця
+
+## Варіант 2
+База даних: Виробництво дронів.
+
+Тип записів: Геш-таблиця.
 
 ## Лістинг реалізації завдання
 ```lisp
-    ;parsers for different types 
-    (defun parse-csv-line (str parsers)
-    (let* ((raw-cells (uiop:split-string str :separator '(#\;)))
-            (cells (mapcar (lambda (s)
-                            (string-trim '(#\Space #\Tab #\Return #\Newline) s))
-                            raw-cells)))
-        (mapcar #'funcall parsers cells)))
+(defparameter *base-path* "D:/PROGRAMS/portacle/portacle/projects/Lab5/")
 
-    (defun parse-float (str)
-    (car (multiple-value-list (read-from-string str))))
+(defun get-full-path (filename)
+  (concatenate 'string *base-path* filename))
 
-    (defun parse-int-or-nil (str)
-    (if (string= str "")
-        nil
-        (parse-integer str)))
+(defun trim-whitespace (str)
+  (string-trim '(#\Space #\Tab #\Newline #\Return) str))
 
-    (defun parse-float-or-nil (str)
-    (if (string= str "")
-        nil
-        (parse-float str))) 
+(defun split-csv-line (string)
+  (let ((result '())
+        (start 0)
+        (len (length string)))
+    (loop
+      (let ((comma-pos (position #\, string :start start)))
+        (if comma-pos
+            (progn
+              (push (trim-whitespace (subseq string start comma-pos)) result)
+              (setf start (1+ comma-pos)))
+            (progn
+              (push (trim-whitespace (subseq string start len)) result)
+              (return (nreverse result))))))))
 
-    (defun parse-string-or-nil (str)
-    (if (string= str "")
-        nil
-        str))
+(defun parse-int-safe (str)
+  (if (and (> (length str) 0) (every #'digit-char-p str))
+      (parse-integer str)
+      str))
 
+(defun truncate-string (obj width)
+  (let ((str (format nil "~a" obj)))
+    (if (> (length str) width)
+        (format nil "~a.." (subseq str 0 (- width 2)))
+        str)))
 
-    ;structure for model and project csv-s
-    (defun make-model-ht (id name type year)
-    (let ((ht (make-hash-table :test 'eq)))
-        (setf (gethash :id ht) id
-            (gethash :name ht) name
-            (gethash :type ht) type
-            (gethash :year ht) year)
-        ht))
+(defun make-manufacturer (row-data)
+  (let ((ht (make-hash-table :test 'eq)))
+    (setf (gethash :type ht) :manufacturer)
+    (setf (gethash :id ht) (parse-int-safe (nth 0 row-data)))
+    (setf (gethash :name ht) (nth 1 row-data))
+    (setf (gethash :country ht) (nth 2 row-data))
+    (setf (gethash :year ht) (parse-int-safe (nth 3 row-data)))
+    ht))
 
-    (defun make-project-ht (id name model-id budget-kusd customer status)
-    (let ((ht (make-hash-table :test 'eq)))
-        (setf (gethash :id ht) id
-            (gethash :name ht) name
-            (gethash :model-id ht) model-id
-            (gethash :budget-kusd ht) budget-kusd
-            (gethash :customer ht) customer
-            (gethash :status ht) status)
-        ht))
+(defun make-drone (row-data)
+  (let ((ht (make-hash-table :test 'eq)))
+    (setf (gethash :type ht) :drone)
+    (setf (gethash :id ht) (parse-int-safe (nth 0 row-data)))
+    (setf (gethash :model ht) (nth 1 row-data))
+    (setf (gethash :mfg-id ht) (parse-int-safe (nth 2 row-data)))
+    (setf (gethash :year ht) (parse-int-safe (nth 3 row-data)))
+    (setf (gethash :price ht) (parse-int-safe (nth 4 row-data)))
+    ht))
 
-
-
-
-    ;csv-s to stings
-    (defun csv-string->model-ht (str)
-    (let* ((vals (parse-csv-line
-                    str
-                    (list #'parse-integer
-                        #'identity
-                        #'parse-string-or-nil
-                        #'parse-int-or-nil)))
-            (id   (nth 0 vals))
-            (name (nth 1 vals))
-            (type (nth 2 vals))
-            (year (nth 3 vals)))
-        (make-model-ht id name type year)))
-
-    (defun csv-string->project-ht (str)
-    (let* ((vals (parse-csv-line
-                    str
-                    (list #'parse-integer    
-                        #'identity            
-                        #'parse-integer       
-                        #'parse-float-or-nil  
-                        #'parse-string-or-nil 
-                        #'identity)))         
-            (id          (nth 0 vals))
-            (name        (nth 1 vals))
-            (model-id    (nth 2 vals))
-            (budget-kusd (nth 3 vals))
-            (customer    (nth 4 vals))
-            (status      (nth 5 vals)))
-        (make-project-ht id name model-id budget-kusd customer status)))
-
-
-
-
-    ;read tables and path to them
-    (defun read-table-from-file (path row-parser)
-    (with-open-file (s path)
-        (read-line s nil nil)
-        (let ((rows '()))
-        (loop for line = (read-line s nil nil)
+(defun read-csv-file (filepath record-builder)
+  (let ((records '()))
+    (with-open-file (stream filepath :direction :input :if-does-not-exist nil)
+      (if (null stream)
+          (format t "ПОМИЛКА: Файл не знайдено: ~a~%" filepath)
+          (loop for line = (read-line stream nil)
                 while line
-                unless (string= line "")
-                do (push (funcall row-parser line) rows)
-                finally (return (nreverse rows))))))
+                do (let ((trimmed (trim-whitespace line)))
+                     (when (> (length trimmed) 0)
+                       (push (funcall record-builder (split-csv-line trimmed)) records))))))
+    (nreverse records)))
 
+(defun select (filename type-key)
+  (let ((full-path (get-full-path filename))
+        (builder (case type-key
+                   (:manufacturer #'make-manufacturer)
+                   (:drone #'make-drone)
+                   (t (error "Невідомий тип запису")))))
+    
+    (lambda (&rest filters)
+      (let ((all-records (read-csv-file full-path builder)))
+        (if (null filters)
+            all-records
+            (remove-if-not 
+             (lambda (rec)
+               (loop for (key val) on filters by #'cddr
+                     always (equal (gethash key rec) val)))
+             all-records))))))
 
-    (defparameter *data-dir*
-        #P"C:/Users/Andrew/portacle/projects/lab5/")
+(defun hash-to-alist (ht)
+  (let ((alist '()))
+    (maphash (lambda (k v) (push (cons k v) alist)) ht)
+    alist))
 
-    (defun models-path ()
-        (merge-pathnames "models.csv" *data-dir*))
+(defun print-line (width)
+  (format t "+")
+  (dotimes (i width) (format t "-"))
+  (format t "+~%"))
 
-    (defun projects-path ()
-        (merge-pathnames "projects.csv" *data-dir*))
+(defun get-columns (type)
+  (case type
+    (:manufacturer '((:id "ID" 4) (:name "Компанія" 18) (:country "Країна" 12) (:year "Рік зас." 8)))
+    (:drone          '((:id "ID" 4) (:model "Модель" 20) (:year "Рік вир." 8) (:price "Ціна" 8) (:mfg-id "MfgID" 6)))
+    (t              '((:data "Дані" 40)))))
 
+(defun print-table (records)
+  (when (null records)
+    (format t "Дані відсутні.~%")
+    (return-from print-table))
 
+  (let* ((sample (first records))
+         (type (gethash :type sample))
+         (columns (get-columns type))
+         (total-width (+ 1 (loop for col in columns sum (+ (third col) 3)))))
 
-    ;check if everything is fine (as expected fields)
-    (defun matching-model-p (ht &key id name type year)
-    (and (if id
-            (eql id (gethash :id ht))
-            t)
-        (if name
-            (string= name (gethash :name ht))
-            t)
-        (if type
-            (let ((tval (gethash :type ht)))
-                (and tval (string= type tval)))
-            t)
-        (if year
-            (eql year (gethash :year ht))
-            t)))
+    (format t "~%")
+    (print-line (- total-width 2))
+    
+    (format t "|")
+    (dolist (col columns)
+      (format t " ~va |" (third col) (second col)))
+    (format t "~%")
+    (print-line (- total-width 2))
 
-    (defun matching-project-p (ht
-                            &key id name model-id
-                                    budget-min budget-max
-                                    customer status)
-    (and (if id
-            (eql id (gethash :id ht))
-            t)
-        (if name
-            (string= name (gethash :name ht))
-            t)
-        (if model-id
-            (eql model-id (gethash :model-id ht))
-            t)
-        (if customer
-            (let ((cval (gethash :customer ht)))
-                (and cval (string= customer cval)))
-            t)
-        (if status
-            (string= status (gethash :status ht))
-            t)
-        (if budget-min
-            (let ((b (gethash :budget-kusd ht)))
-                (and b (<= budget-min b)))
-            t)
-        (if budget-max
-            (let ((b (gethash :budget-kusd ht)))
-                (and b (<= b budget-max)))
-            t)))
+    (dolist (rec records)
+      (format t "|")
+      (dolist (col columns)
+        (let ((val (gethash (first col) rec)))
+          (format t " ~va |" (third col) (truncate-string val (third col)))))
+      (format t "~%"))
+    
+    (print-line (- total-width 2))))
 
-    ;select
-    (defun select (path kind)
-    (ecase kind
-        (:models
-        (lambda (&key id name type year)
-        (let ((rows (read-table-from-file path #'csv-string->model-ht)))
-            (remove-if-not
-            (lambda (ht)
-                (matching-model-p ht :id id :name name :type type :year year))
-            rows))))
-        (:projects
-        (lambda (&key id name model-id budget-min budget-max customer status)
-        (let ((rows (read-table-from-file path #'csv-string->project-ht)))
-            (remove-if-not
-            (lambda (ht)
-                (matching-project-p ht
-                                    :id id :name name :model-id model-id
-                                    :budget-min budget-min :budget-max budget-max
-                                    :customer customer :status status))
-            rows))))))
+(defun save-to-file (filename records)
+  (let ((full-path (get-full-path filename)))
+    (with-open-file (stream full-path :direction :output 
+                            :if-exists :supersede :if-does-not-exist :create)
+      (dolist (rec records)
+        (format stream "~a~%" (hash-to-alist rec))))))
 
+(defun run ()
+  (let ((drones-select (select "drones.csv" :drone))
+        (mfg-select    (select "manufacturers.csv" :manufacturer)))
 
+    (format t "~%Довідник виробників (manufacturers.csv):")
+    (print-table (funcall mfg-select))
 
+    (format t "~%Каталог дронів (drones.csv):")
+    (print-table (funcall drones-select))
 
-    (defun write-selection-to-file (path records kind)
-    (with-open-file (s path
-                        :direction :output
-                        :if-exists :supersede
-                        :if-does-not-exist :create)
-        (ecase kind
-        (:models
-        (format s "id;name;type;year~%")
-        (dolist (ht records)
-            (format s "~A;~A;~A;~A~%"
-                    (or (gethash :id ht) "")
-                    (or (gethash :name ht) "")
-                    (or (gethash :type ht) "")
-                    (or (gethash :year ht) ""))))
-        (:projects
-        (format s "id;name;model-id;budget-kusd;customer;status~%")
-        (dolist (ht records)
-            (format s "~A;~A;~A;~A;~A;~A~%"
-                    (or (gethash :id ht) "")
-                    (or (gethash :name ht) "")
-                    (or (gethash :model-id ht) "")
-                    (or (gethash :budget-kusd ht) "")
-                    (or (gethash :customer ht) "")
-                    (or (gethash :status ht) "")))))))
+    (format t "~%Фільтр за виробниками з США:")
+    (let ((usa-mfg (funcall mfg-select :country "USA")))
+      (print-table usa-mfg)
+      (save-to-file "sort_usa_manufacturers.txt" usa-mfg)
+      (format t "Результат збережено у 'sort_usa_manufacturers.txt'~%"))
 
-
-
-
-    (defun hash-table-to-alist (ht)
-    (let (result)
-        (maphash (lambda (key value)
-                (push (cons key value) result))
-                ht)
-        result))
-
-    (defun alist-to-hash-table (alist &key (test 'eq))
-    (let ((ht (make-hash-table :test test)))
-        (dolist (pair alist ht)
-        (setf (gethash (car pair) ht) (cdr pair)))))
-
-
-
-
-
-
-    (defun pretty-print-models (records &optional (stream *standard-output*))
-    (format stream "~&~3A  ~20A  ~6A  ~4A~%"
-            "ID" "NAME" "TYPE" "YEAR")
-    (format stream "~A~%"
-            "-------------------------------------------")
-    (dolist (ht records)
-        (format stream "~3A  ~20A  ~6A  ~4A~%"
-                (or (gethash :id ht) "")
-                (or (gethash :name ht) "")
-                (or (gethash :type ht) "")
-                (or (gethash :year ht) ""))))
-
-    (defun pretty-print-projects (records &optional (stream *standard-output*))
-    (format stream "~&~3A  ~40A  ~8A  ~12A  ~30A  ~10A~%"
-            "ID" "NAME" "MODEL-ID" "BUDGET" "CUSTOMER" "STATUS")
-    (format stream "~A~%"
-            (make-string 115 :initial-element #\-))
-    (dolist (ht records)
-        (format stream "~3A  ~40A  ~8A  ~12A  ~30A  ~10A~%"
-                (or (gethash :id ht) "")
-                (or (gethash :name ht) "")
-                (or (gethash :model-id ht) "")
-                (let ((b (gethash :budget-kusd ht)))
-                (if b
-                    (format nil "~,2F" b)
-                    ""))
-                (or (gethash :customer ht) "")
-                (or (gethash :status ht) ""))))
-
-
-    (defun pretty-print (records kind &optional (stream *standard-output*))
-    (ecase kind
-        (:models   (pretty-print-models records stream))
-        (:projects (pretty-print-projects records stream))))
-
+    (format t "~%Демонстрація конвертації (Hash -> Alist):")
+    (let ((records (funcall drones-select)))
+      (if records
+          (let* ((original (first records))
+                 (alist (hash-to-alist original)))
+            
+            (format t "~%Оригінал (Геш-таблиця):")
+            (print-table (list original))
+            
+            (format t "~%Конвертація (Асоціативний список):~%")
+            (dolist (pair alist)
+              (format t "  ~20a -> ~a~%" (car pair) (cdr pair))))
+          (format t "Немає даних.~%")))))
 ```
 ### Тестові набори та утиліти
 ```lisp
+(defun check-result (name actual expected)
+  (format t "~:[FAILED~;passed~]... ~a~%"
+          (equal actual expected)
+          name))
 
-    ;tests
-    (defun check-test (title condition)
-    (format t "~:[FAILED~;passed~] ~a~%" condition title)
-    condition)
-
-    (defun test-csv-string->model-ht ()
-    (format t "~&== test-csv-string->model-ht ==~%")
-    (let* ((line "1;GPT-4;LLM;2023")
-            (ht (csv-string->model-ht line))
-            (ok t))
-        (setf ok (and ok (check-test "model/id"
-                                    (eql (gethash :id ht) 1)))
-            ok (and ok (check-test "model/name"
-                                    (string= (gethash :name ht) "GPT-4")))
-            ok (and ok (check-test "model/type"
-                                    (string= (gethash :type ht) "LLM")))
-            ok (and ok (check-test "model/year"
-                                    (eql (gethash :year ht) 2023))))
-        ok))
-
-    (defun test-csv-string->project-ht ()
-    (format t "~&== test-csv-string->project-ht ==~%")
-    (let* ((line "1;Dynamic NPC Dialogues;1;350.0;Kepler Interactive;process")
-            (ht (csv-string->project-ht line))
-            (ok t))
-        (setf ok (and ok (check-test "project/id"
-                                    (eql (gethash :id ht) 1)))
-            ok (and ok (check-test "project/name"
-                                    (string= (gethash :name ht)
-                                            "Dynamic NPC Dialogues")))
-            ok (and ok (check-test "project/model-id"
-                                    (eql (gethash :model-id ht) 1)))
-            ok (and ok (check-test "project/budget-kusd"
-                                    (= (gethash :budget-kusd ht) 350.0d0)))
-            ok (and ok (check-test "project/customer"
-                                    (string= (gethash :customer ht)
-                                            "Kepler Interactive")))
-            ok (and ok (check-test "project/status"
-                                    (string= (gethash :status ht) "process"))))
-        ok))
-
-
-    (defun test-read-table-from-file-models ()
-    (format t "~&== test-read-table-from-file-models ==~%")
-    (let* ((models (read-table-from-file (models-path)
-                                        #'csv-string->model-ht))
-            (ok t))
-        (setf ok (and ok (check-test "models/listp"
-                                    (listp models)))
-            ok (and ok (check-test "models/not-empty"
-                                    (> (length models) 0)))
-            ok (and ok (check-test "models/first-hash-table"
-                                    (hash-table-p (first models)))))
-        ok))
-
-    (defun test-read-table-from-file-projects ()
-    (format t "~&== test-read-table-from-file-projects ==~%")
-    (let* ((projects (read-table-from-file (projects-path)
-                                            #'csv-string->project-ht))
-            (ok t))
-        (setf ok (and ok (check-test "projects/listp"
-                                    (listp projects)))
-            ok (and ok (check-test "projects/not-empty"
-                                    (> (length projects) 0)))
-            ok (and ok (check-test "projects/first-hash-table"
-                                    (hash-table-p (first projects)))))
-        ok))
-
-
-    (defun test-select-models ()
-    (format t "~&== test-select-models ==~%")
-    (let* ((sel (select (models-path) :models))
-            (all (funcall sel))
-            (ok t))
-        (setf ok (and ok (check-test "select/models/listp"
-                                    (listp all)))
-            ok (and ok (check-test "select/models/not-empty"
-                                    (> (length all) 0))))
-        (when all
-        (let* ((first (first all))
-                (id (gethash :id first))
-                (by-id (funcall sel :id id)))
-            (setf ok (and ok (check-test "select/models/by-id/listp"
-                                        (listp by-id)))
-                ok (and ok (check-test "select/models/by-id/not-empty"
-                                        (> (length by-id) 0)))
-                ok (and ok (check-test "select/models/by-id/all-same-id"
-                                        (every (lambda (ht)
-                                                (eql (gethash :id ht) id))
-                                                by-id))))))
-        ok))
-
-    (defun test-select-projects ()
-    (format t "~&== test-select-projects ==~%")
-    (let* ((sel (select (projects-path) :projects))
-            (all (funcall sel))
-            (ok t))
-        (setf ok (and ok (check-test "select/projects/listp"
-                                    (listp all)))
-            ok (and ok (check-test "select/projects/not-empty"
-                                    (> (length all) 0))))
-        (when all
-        (let* ((first (first all))
-                (id (gethash :id first))
-                (by-id (funcall sel :id id)))
-            (setf ok (and ok (check-test "select/projects/by-id/listp"
-                                        (listp by-id)))
-                ok (and ok (check-test "select/projects/by-id/not-empty"
-                                        (> (length by-id) 0)))
-                ok (and ok (check-test "select/projects/by-id/all-same-id"
-                                        (every (lambda (ht)
-                                                (eql (gethash :id ht) id))
-                                                by-id))))))
-        ok))
-
-
-    (defun test-pretty-print-models ()
-    (format t "~&== test-pretty-print-models ==~%")
-    (let* ((records (list
-                    (make-model-ht 1 "GPT-4" "LLM" 2023)
-                    (make-model-ht 2 "ResNet-50" "CNN" 2015)))
-            (output (with-output-to-string (s)
-                    (pretty-print-models records s)))
-            (ok t))
-        (setf ok (and ok (check-test "pp/models/not-empty"
-                                    (> (length output) 0)))
-            ok (and ok (check-test "pp/models/contains-GPT-4"
-                                    (search "GPT-4" output)))
-            ok (and ok (check-test "pp/models/contains-ResNet-50"
-                                    (search "ResNet-50" output))))
-        ok))
-
-
-    (defun test-pretty-print-projects ()
-    (format t "~&== test-pretty-print-projects ==~%")
-    (let* ((records (list
-                    (make-project-ht 1 "Dynamic NPC Dialogues"
-                                        1 350.0d0 "Kepler Interactive" "process")
-                    (make-project-ht 2 "Toxic Chat Filter"
-                                        3 nil "Electronic Arts" "done")))
-            (output (with-output-to-string (s)
-                    (pretty-print-projects records s)))
-            (ok t))
-        (setf ok (and ok (check-test "pp/projects/not-empty"
-                                    (> (length output) 0)))
-            ok (and ok (check-test "pp/projects/contains-first"
-                                    (search "Dynamic NPC Dialogues" output)))
-            ok (and ok (check-test "pp/projects/contains-second"
-                                    (search "Toxic Chat Filter" output))))
-        ok))
-
-
-    (defun run-all-tests ()
-    (format t "~&Running tests...~%")
-    (let ((ok t))
-        (setf ok (and ok (test-csv-string->model-ht))
-            ok (and ok (test-csv-string->project-ht))
-            ok (and ok (test-read-table-from-file-models))
-            ok (and ok (test-read-table-from-file-projects))
-            ok (and ok (test-select-models))
-            ok (and ok (test-select-projects))
-            ok (and ok (test-pretty-print-models))
-            ok (and ok (test-pretty-print-projects)))
-        (format t "~&Summary: ~A~%" (if ok "ALL TESTS PASSED" "SOME TESTS FAILED"))
-        ok))
-
+(defun run-tests ()
+  (format t "~%МОДУЛЬНЕ ТЕСТУВАННЯ~%")
+  
+  (check-result "TEST 1 trim-whitespace" (trim-whitespace "  abc  ") "abc")
+  (check-result "TEST 2 split-csv-line" (split-csv-line "1, DJI , China ") '("1" "DJI" "China"))
+  (check-result "TEST 3 parse-int-safe" (parse-int-safe "2024") 2024)
+  (check-result "TEST 4 parse-int-safe (string)" (parse-int-safe "NotNum") "NotNum")
+  
+  (let* ((row '("10" "TestDrone" "99" "2023" "500"))
+         (drone (make-drone row)))
+    (check-result "TEST 5 make-drone ID parsing" (gethash :id drone) 10)
+    (check-result "TEST 6 make-drone Model mapping" (gethash :model drone) "TestDrone"))
+  
+  (let* ((ht (make-hash-table :test 'eq))
+         (alist nil))
+    (setf (gethash :a ht) 1)
+    (setf alist (hash-to-alist ht))
+    (check-result "TEST 7 hash-to-alist" (assoc :a alist) '(:a . 1))))
 ```
 ### Тестування
 ```lisp
-CL-USER> (run-all-tests)
-Running tests...
-== test-csv-string->model-ht ==
-passed model/id
-passed model/name
-passed model/type
-passed model/year
-== test-csv-string->project-ht ==
-passed project/id
-passed project/name
-passed project/model-id
-passed project/budget-kusd
-passed project/customer
-passed project/status
-== test-read-table-from-file-models ==
-passed models/listp
-passed models/not-empty
-passed models/first-hash-table
-== test-read-table-from-file-projects ==
-passed projects/listp
-passed projects/not-empty
-passed projects/first-hash-table
-== test-select-models ==
-passed select/models/listp
-passed select/models/not-empty
-passed select/models/by-id/listp
-passed select/models/by-id/not-empty
-passed select/models/by-id/all-same-id
-== test-select-projects ==
-passed select/projects/listp
-passed select/projects/not-empty
-passed select/projects/by-id/listp
-passed select/projects/by-id/not-empty
-passed select/projects/by-id/all-same-id
-== test-pretty-print-models ==
-passed pp/models/not-empty
-passed pp/models/contains-GPT-4
-passed pp/models/contains-ResNet-50
-== test-pretty-print-projects ==
-passed pp/projects/not-empty
-passed pp/projects/contains-first
-passed pp/projects/contains-second
-Summary: ALL TESTS PASSED
-349
+МОДУЛЬНЕ ТЕСТУВАННЯ
+passed... TEST 1 trim-whitespace
+passed... TEST 2 split-csv-line
+passed... TEST 3 parse-int-safe
+passed... TEST 4 parse-int-safe (string)
+passed... TEST 5 make-drone ID parsing
+passed... TEST 6 make-drone Model mapping
+passed... TEST 7 hash-to-alist
 
-;pretty-print
-CL-USER> (defparameter *projects*
-  (read-table-from-file (projects-path) #'csv-string->project-ht))
+Довідник виробників (manufacturers.csv):
++-----------------------------------------------------+
+| ID   | Компанія           | Країна       | Рік зас. |
++-----------------------------------------------------+
+| 1    | DJI                | China        | 2006     |
+| 2    | Skydio             | USA          | 2014     |
+| 3    | Parrot             | France       | 1994     |
+| 4    | Ukrspecsystems     | Ukraine      | 2014     |
+| 5    | General Atomics    | USA          | 1955     |
++-----------------------------------------------------+
 
-*PROJECTS*
-CL-USER> (pretty-print-projects *projects*)
+Каталог дронів (drones.csv):
++------------------------------------------------------------+
+| ID   | Модель               | Рік вир. | Ціна     | MfgID  |
++------------------------------------------------------------+
+| 1    | Mavic 3 Enterprise   | 2021     | 3200     | 1      |
+| 2    | Mini 3 Pro           | 2022     | 800      | 1      |
+| 3    | Skydio X2            | 2021     | 10000    | 2      |
+| 4    | Anafi USA            | 2020     | 7000     | 3      |
+| 5    | PD-2 VTOL            | 2020     | 30000    | 4      |
+| 6    | MQ-9 Reaper          | 2007     | 32000000 | 5      |
++------------------------------------------------------------+
 
-ID   NAME                                      MODEL-ID  BUDGET        CUSTOMER                        STATUS    
--------------------------------------------------------------------------------------------------------------------
-1    Dynamic NPC Dialogues                     1         350.00        Kepler Interactive              process   
-2    Procedural Quest Generator                2         420.00        Square Enix                     idea      
-3    Toxic Chat Filter                         3         180.00        Electronic Arts                 done      
-4    Automatic Highlight Generator             4         250.00        Ubisoft                         process   
-NIL
+Фільтр за виробниками з США:
++-----------------------------------------------------+
+| ID   | Компанія           | Країна       | Рік зас. |
++-----------------------------------------------------+
+| 2    | Skydio             | USA          | 2014     |
+| 5    | General Atomics    | USA          | 1955     |
++-----------------------------------------------------+
+Результат збережено у 'sort_usa_manufacturers.csv'
 
+Демонстрація конвертації (Hash -> Alist):
+Оригінал (Геш-таблиця):
++------------------------------------------------------------+
+| ID   | Модель               | Рік вир. | Ціна     | MfgID  |
++------------------------------------------------------------+
+| 1    | Mavic 3 Enterprise   | 2021     | 3200     | 1      |
++------------------------------------------------------------+
 
-CL-USER> (defparameter *models*
-  (read-table-from-file (models-path) #'csv-string->model-ht))
-*MODELS*
-CL-USER> (pretty-print-models *models*)
-ID   NAME                  TYPE    YEAR
--------------------------------------------
-1    GPT-4                 LLM     2023
-2    GPT-5                 LLM     2025
-3    Grok-4                LLM     2024
-4    DeepSeek-V3           LLM     2024
-5    ResNet-50             CNN     2015
-NIL
-
-;selection
-CL-USER> (defparameter *sel-models*
-           (select (models-path) :models))
-*SEL-MODELS*
-CL-USER> (funcall *sel-models*)
-(#<HASH-TABLE :TEST EQ :COUNT 4 {10030FAF33}>
- #<HASH-TABLE :TEST EQ :COUNT 4 {10030FB443}>
- #<HASH-TABLE :TEST EQ :COUNT 4 {10030FB953}>
- #<HASH-TABLE :TEST EQ :COUNT 4 {10030FBE83}>
- #<HASH-TABLE :TEST EQ :COUNT 4 {10030FC3B3}>)
-CL-USER> (defparameter *llm-models*
-           (funcall *sel-models* :type "LLM"))
-*LLM-MODELS*
-CL-USER> (length *llm-models*)
-4
-
-
-CL-USER> (defparameter *sel-projects*
-           (select (projects-path) :projects))
-*SEL-PROJECTS*
-CL-USER> (defparameter *in-process*
-           (funcall *sel-projects* :status "process"))
-*IN-PROCESS*
-CL-USER> (mapcar (lambda (ht) (list (gethash :id ht)
-                                    (gethash :name ht)))
-                 *in-process*)
-((1 "Dynamic NPC Dialogues") (4 "Automatic Highlight Generator"))
-
-
-;write to file
-CL-USER> (defparameter *llm*
-           (funcall *sel-models* :type "LLM"))
-*LLM*
-CL-USER> (write-selection-to-file
-          (merge-pathnames "llm-models.csv" *data-dir*)
-          *llm*
-          :models)
-NIL
-CL-USER> (read-table-from-file
-          (merge-pathnames "llm-models.csv" *data-dir*)
-          #'csv-string->model-ht)
-(#<HASH-TABLE :TEST EQ :COUNT 4 {100314D963}>
- #<HASH-TABLE :TEST EQ :COUNT 4 {100314DE43}>
- #<HASH-TABLE :TEST EQ :COUNT 4 {100314E323}>
- #<HASH-TABLE :TEST EQ :COUNT 4 {100314E823}>)
-
+Конвертація (Асоціативний список):
+  PRICE                -> 3200
+  YEAR                 -> 2021
+  MFG-ID               -> 1
+  MODEL                -> Mavic 3 Enterprise
+  ID                   -> 1
+  TYPE                 -> DRONE
 ```
-<p align="center">
-  <img src="img/lab5.jpg" alt="Створений файл llm-models.csv" width="70%">
-</p>
-
