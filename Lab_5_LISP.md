@@ -195,7 +195,7 @@
             (format t "~%Конвертація (Асоціативний список):~%")
             (dolist (pair alist)
               (format t "  ~20a -> ~a~%" (car pair) (cdr pair))))
-          (format t "Немає даних.~%")))))
+          (format t "НЕМАЄ ДАНИХ~%")))))
 ```
 ### Тестові набори та утиліти
 ```lisp
@@ -282,3 +282,4 @@ passed... TEST 7 hash-to-alist
   ID                   -> 1
   TYPE                 -> DRONE
 ```
+
